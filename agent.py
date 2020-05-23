@@ -1,8 +1,8 @@
 import platform, psutil, cpuinfo, requests, json, socket
-    
+   
 class ServerInfoSnapshot():
-    def __init__(self, ip, processor, processorName, processes, users, soName, soRelease, soVersion):
-        self.ip = ip   
+    def __init__(self, host, processor, processorName, processes, users, soName, soRelease, soVersion):
+        self.host = host   
         self.processor = processor
         self.processorName = processorName
         self.users = users
@@ -16,18 +16,13 @@ class ServerInfoSnapshot():
     def printServerInfo(self):
         print("Processor: {}, Processor Name: {}, SO Name: {}, SO Release: {} ".format(self.processor, self.processorName, self.soName, self.soVersion))
 
+# Función para leer la URL parametrizada en el archivo agent.config
 def readConfig():
     configFile = open('agent.config', 'r') 
     url = configFile.readline()
     return url
     
 # Función que recopila la información de compliance
-# ●	Información sobre el procesador. 
-# ●	Listado de procesos corriendo. 
-# ●	Usuarios con una sesión abierta en el sistema. 
-# ●	Nombre del sistema operativo. 
-# ●	Versión del sistema operativo. 
-
 def getComplianceInfo():
     # Genero el listado de procesos en ejecución
     listOfProcObjects = []
@@ -47,10 +42,11 @@ def getComplianceInfo():
     for user in psutil.users():
         users.append({"username": user[0], "terminal": user[1]})
 
-    ip = socket.gethostbyname(socket.gethostname())
+    # Se utiliza el hostname en lugar de la IP para evitar ambigüedad (múltiples IPs, incluyendo la localhost)
+    host = socket.gethostname()
 
     # Genero toda la información necesaria
-    snapshot = ServerInfoSnapshot(ip, uname.processor, cpuinfo.get_cpu_info()['brand'],listOfProcObjects, users, uname.system, uname.release, uname.version)
+    snapshot = ServerInfoSnapshot(host, uname.processor, cpuinfo.get_cpu_info()['brand'],listOfProcObjects, users, uname.system, uname.release, uname.version)
     return json.dumps(snapshot.__dict__)
 
 # Leer el archivo config
