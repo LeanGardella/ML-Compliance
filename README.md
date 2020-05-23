@@ -2,12 +2,11 @@
 Desarrollo de actividad vinculada a compliance continuo
 
 # Requisitos
-
->PS Utils
+> PS Utils
 ```sh
 pip3 install psutils
 ```
->CPU info
+> CPU info
 ```sh
 pip3 install py-cpuinfo
 ```
