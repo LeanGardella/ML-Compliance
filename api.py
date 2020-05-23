@@ -1,37 +1,40 @@
 import csv, json
 from datetime import datetime
 
-ip = "192.168.1.1"
-port = 4201
+from flask import Flask, request, jsonify
 
-def getServerInfoSnapshot(ip, port):
-    # processor, processorName, processes, users, soName, soRelease, soVersion
-    row = [ "processor", "processorName", "processes", "users", "soName", "soRelease", "soVersion"]
-    return row
+app = Flask(__name__)
 
-def saveAsCsv(row):
+@app.route('/')
+def defaultUrl():
+    return 'Running'
+
+@app.route('/save-snapshot', methods=['POST'])
+def saveSnapshot():
+    dataJson = request.form['snapshot']
+    ipTxt = request.form['ipAddress']
+    saveAsCsv(dataJson, ipTxt)
+    saveAsJSON(dataJson, ipTxt)
+    return 'OK'
+
+def saveAsCsv(data, ip):
     # <IP de servidor>_<AAAA-MM-DD>.csv
     filename = ip + "_" + datetime.today().strftime('%Y-%m-%d')
+    
+    row = json.loads(data)
+    header = row.keys()
+    values = row.values()
+
     with open(filename + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(row)
+        writer.writerow(header)
+        writer.writerow(values)
 
-def saveAsJSON(row):
+def saveAsJSON(jsonTxt, ip):
     # <IP de servidor>_<AAAA-MM-DD>.csv
     filename = ip + "_" + datetime.today().strftime('%Y-%m-%d')
     
-    data = {}
-    data['processor'] = row[0]
-    data['processorName'] = row[1]
-    data['processes'] = row[2]
-    data['users'] = row[3]
-    data['soName'] = row[4]
-    data['soRelease'] = row[5]
-    data['soVersion'] = row[6]
-    
     with open(filename + '.txt', 'w') as file:
-        json.dump(data, file)
+        file.write(jsonTxt+'\n')
     
         
-saveAsCsv(getServerInfoSnapshot(ip, port))
-saveAsJSON(getServerInfoSnapshot(ip, port))

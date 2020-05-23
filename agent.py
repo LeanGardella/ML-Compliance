@@ -1,9 +1,7 @@
 import platform
-import sys
-import os
-import csv
 import psutil
 import cpuinfo
+import requests
 
 class ServerInfoSnapshot():
     
@@ -50,5 +48,9 @@ def getComplianceInfo():
 # Inicializo el agente
 print("Starting agent...")
 getComplianceInfo()
+# requests.post('https://httpbin.org/post', data={'key':'value'})
+# requests.post('http://localhost:5000', data={'test': 'ok'})
 
+response = requests.get('http://127.0.0.1:5000')
+print(response)
 
