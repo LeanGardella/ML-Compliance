@@ -1,11 +1,8 @@
-import platform
-import psutil
-import cpuinfo
-import requests
-
-class ServerInfoSnapshot():
+import platform, psutil, cpuinfo, requests, json, socket
     
-    def __init__(self, processor, processorName, processes, users, soName, soRelease, soVersion):
+class ServerInfoSnapshot():
+    def __init__(self, ip, processor, processorName, processes, users, soName, soRelease, soVersion):
+        self.ip = ip   
         self.processor = processor
         self.processorName = processorName
         self.users = users
@@ -14,43 +11,55 @@ class ServerInfoSnapshot():
         self.soRelease = soRelease
         self.soVersion = soVersion
         super().__init__()
-        
-    # def toJSON(self):
     
-    # def toCSV(self):
     
     def printServerInfo(self):
         print("Processor: {}, Processor Name: {}, SO Name: {}, SO Release: {} ".format(self.processor, self.processorName, self.soName, self.soVersion))
-        
+
+def readConfig():
+    configFile = open('agent.config', 'r') 
+    url = configFile.readline()
+    return url
+    
 # Función que recopila la información de compliance
-# ●	Información sobre el procesador. OK
-# ●	Listado de procesos corriendo. OK
-# ●	Usuarios con una sesión abierta en el sistema. OK
-# ●	Nombre del sistema operativo. OK
-# ●	Versión del sistema operativo. OK
+# ●	Información sobre el procesador. 
+# ●	Listado de procesos corriendo. 
+# ●	Usuarios con una sesión abierta en el sistema. 
+# ●	Nombre del sistema operativo. 
+# ●	Versión del sistema operativo. 
 
 def getComplianceInfo():
+    # Genero el listado de procesos en ejecución
     listOfProcObjects = []
     for proc in psutil.process_iter():
         try:
-           # Fetch process details as dict
+           # Obtener los detalles de los procesos
            pinfo = proc.as_dict(attrs=['pid', 'name', 'username'])
-           # Append dict to list
            listOfProcObjects.append(pinfo);
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
+    
+    # Datos de plataforma
     uname = platform.uname()
     
+    # Obtengo y parseo los usuarios con sesión iniciada
+    users = []
+    for user in psutil.users():
+        users.append({"username": user[0], "terminal": user[1]})
+
+    ip = socket.gethostbyname(socket.gethostname())
+
     # Genero toda la información necesaria
-    snapshot = ServerInfoSnapshot(uname.processor, cpuinfo.get_cpu_info()['brand'],listOfProcObjects, psutil.users(), uname.system, uname.release, uname.version)
-    snapshot.printServerInfo()
+    snapshot = ServerInfoSnapshot(ip, uname.processor, cpuinfo.get_cpu_info()['brand'],listOfProcObjects, users, uname.system, uname.release, uname.version)
+    return json.dumps(snapshot.__dict__)
 
-# Inicializo el agente
-print("Starting agent...")
-getComplianceInfo()
-# requests.post('https://httpbin.org/post', data={'key':'value'})
-# requests.post('http://localhost:5000', data={'test': 'ok'})
+# Leer el archivo config
+url = readConfig()
 
-response = requests.get('http://127.0.0.1:5000')
-print(response)
+# Obtener toda la información sobre el servidor
+infoJson = getComplianceInfo()
+
+# Enviar información a la API
+response = requests.post(url,json=infoJson)
+
 
