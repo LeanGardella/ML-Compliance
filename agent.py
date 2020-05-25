@@ -58,4 +58,10 @@ infoJson = getComplianceInfo()
 # Enviar información a la API
 response = requests.post(url,json=infoJson)
 
+# Verifica que se haya ejecutado en forma exitosa.
+if(response.status_code == 200):
+    print('Ejecución exitosa finalizada.')
+else:
+    print('Ocurrió un error. Status code: '+response.status_code)
+
 
